@@ -1,0 +1,22 @@
+{
+  "name": "Server: Comments",
+  "service": "arsnova-server-comments",
+  "dockerComposeFile": [
+    "${localEnv:PDK_COMPOSE_FILE}"
+  ],
+  "workspaceFolder": "/workspace/comments",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "asciidoctor.asciidoctor-vscode",
+        "eamodio.gitlens",
+        "editorconfig.editorconfig",
+        "pivotal.vscode-spring-boot",
+        "vscjava.vscode-java-pack"
+      ]
+    }
+  },
+  "shutdownAction": "none",
+  "remoteUser": "dev",
+  "postAttachCommand": "/post-attach.sh"
+}

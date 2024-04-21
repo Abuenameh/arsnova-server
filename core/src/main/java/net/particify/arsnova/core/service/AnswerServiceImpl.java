@@ -61,6 +61,9 @@ import net.particify.arsnova.core.model.MultipleTextsAnswer;
 import net.particify.arsnova.core.model.NumericAnswer;
 import net.particify.arsnova.core.model.NumericAnswerStatistics;
 import net.particify.arsnova.core.model.NumericContent;
+import net.particify.arsnova.core.model.QtiAnswer;
+import net.particify.arsnova.core.model.QtiAnswerStatistics;
+import net.particify.arsnova.core.model.QtiContent;
 import net.particify.arsnova.core.model.PrioritizationAnswerStatistics;
 import net.particify.arsnova.core.model.PrioritizationChoiceContent;
 import net.particify.arsnova.core.model.Room;
@@ -233,6 +236,11 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
       final NumericAnswerStatistics numericStats2 = getNumericStatistics(content.getId(), 2);
       numericStats.getRoundStatistics().add(numericStats2.getRoundStatistics().get(1));
       stats = numericStats;
+    } else if (content.getFormat() == Content.Format.QTI) {
+      final QtiAnswerStatistics qtiStats = getQtiStatistics(content.getId(), 1);
+      final QtiAnswerStatistics qtiStats2 = getQtiStatistics(content.getId(), 2);
+      qtiStats.getRoundStatistics().add(qtiStats2.getRoundStatistics().get(1));
+      stats = qtiStats;
     } else {
       final ChoiceAnswerStatistics choiceStats = getChoiceStatistics(content.getId(), 1);
       final ChoiceAnswerStatistics choiceStats2 = getChoiceStatistics(content.getId(), 2);
@@ -411,6 +419,36 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
   private static boolean isNumericAnswerCorrect(
       final Double selectedNumber, final double correctNumber, final double tolerance) {
     return selectedNumber >= correctNumber - tolerance && selectedNumber <= correctNumber + tolerance;
+  }
+
+  @Override
+  public QtiAnswerStatistics getQtiStatistics(final String contentId, final int round) {
+    final QtiContent content = (QtiContent) contentService.get(contentId);
+    if (content == null) {
+      throw new NotFoundException();
+    }
+    final List<QtiAnswer> answers = answerRepository.findByContentIdRoundForQti(contentId, round);
+    final QtiAnswerStatistics stats = new QtiAnswerStatistics();
+    stats.setContentId(contentId);
+    final QtiAnswerStatistics.QtiRoundStatistics roundStats =
+        new QtiAnswerStatistics.QtiRoundStatistics();
+    roundStats.setRound(round);
+    roundStats.setAbstentionCount((int) answers.stream().filter(a -> a.getResponses().isEmpty()).count());
+    roundStats.setAnswerCount(answers.size());
+    final List<QtiAnswerStatistics.QtiRoundStatistics> roundStatisticsList =
+        new ArrayList<>(Collections.nCopies(round, null));
+    roundStatisticsList.set(round - 1, roundStats);
+    stats.setRoundStatistics(roundStatisticsList);
+    return stats;
+  }
+
+  @Override
+  public QtiAnswerStatistics getQtiStatistics(final String contentId) {
+    final Content content = contentService.get(contentId);
+    if (content == null) {
+      throw new NotFoundException();
+    }
+    return getQtiStatistics(content.getId(), content.getState().getRound());
   }
 
   @Override

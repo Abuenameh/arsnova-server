@@ -12,6 +12,7 @@ import net.particify.arsnova.core.model.NumericAnswerStatistics;
 import net.particify.arsnova.core.model.PrioritizationAnswerStatistics;
 import net.particify.arsnova.core.model.TextAnswer;
 import net.particify.arsnova.core.model.TextAnswerStatistics;
+import net.particify.arsnova.core.model.QtiAnswerStatistics;
 
 @Service
 public class SecuredAnswerService extends AbstractSecuredEntityServiceImpl<Answer>
@@ -69,6 +70,18 @@ public class SecuredAnswerService extends AbstractSecuredEntityServiceImpl<Answe
   @PreAuthorize("hasPermission(#contentId, 'content', 'read')")
   public PrioritizationAnswerStatistics getPrioritizationStatistics(final String contentId) {
     return answerService.getPrioritizationStatistics(contentId);
+  }
+
+  @Override
+  @PreAuthorize("hasPermission(#contentId, 'content', 'read')")
+  public QtiAnswerStatistics getQtiStatistics(final String contentId) {
+    return answerService.getQtiStatistics(contentId);
+  }
+
+  @Override
+  @PreAuthorize("hasPermission(#contentId, 'content', 'read')")
+  public QtiAnswerStatistics getQtiStatistics(final String contentId, final int round) {
+    return answerService.getQtiStatistics(contentId, round);
   }
 
   @Override

@@ -24,6 +24,7 @@ import net.particify.arsnova.core.model.Answer;
 import net.particify.arsnova.core.model.ChoiceAnswerStatistics;
 import net.particify.arsnova.core.model.MultipleTextsAnswer;
 import net.particify.arsnova.core.model.NumericAnswer;
+import net.particify.arsnova.core.model.QtiAnswer;
 import net.particify.arsnova.core.model.PrioritizationAnswerStatistics;
 
 public interface AnswerRepository extends CrudRepository<Answer, String> {
@@ -46,4 +47,6 @@ public interface AnswerRepository extends CrudRepository<Answer, String> {
   PrioritizationAnswerStatistics findByContentIdRoundForPrioritization(String contentId, int optionCount);
 
   List<NumericAnswer> findByContentIdRoundForNumeric(String contentId, int round);
+
+  List<QtiAnswer> findByContentIdRoundForQti(String contentId, int round);
 }

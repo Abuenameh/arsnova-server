@@ -34,18 +34,18 @@ public class QtiAnswer extends Answer {
 
     }
 
-    public QtiResponse(final String identifier, final String value1, final String[] value2) {
+    public QtiResponse(final String identifier, final String value, final String[] values) {
       this.identifier = identifier;
-      this.value1 = value1;
-      this.value2 = value2;
+      this.value = value;
+      this.values = values;
     }
 
     // @NotBlank
     private String identifier;
 
-    private String value1;
+    private String value;
 
-    private String[] value2;
+    private String[] values;
 
     @JsonView({View.Persistence.class, View.Public.class})
     public String getIdentifier() {
@@ -58,23 +58,23 @@ public class QtiAnswer extends Answer {
     }
 
     @JsonView({View.Persistence.class, View.Public.class})
-    public String getValue1() {
-      return value1;
+    public String getValue() {
+      return value;
     }
 
     @JsonView({View.Persistence.class, View.Public.class})
-    public void setValue1(final String value1) {
-      this.value1 = value1;
+    public void setValue(final String value) {
+      this.value = value;
     }
 
     @JsonView({View.Persistence.class, View.Public.class})
-    public String[] getValue2() {
-      return value2;
+    public String[] getValues() {
+      return values;
     }
 
     @JsonView({View.Persistence.class, View.Public.class})
-    public void setValue2(final String[] value2) {
-      this.value2 = value2;
+    public void setValues(final String[] values) {
+      this.values = values;
     }
 
     @Override
@@ -87,20 +87,20 @@ public class QtiAnswer extends Answer {
       }
       final QtiResponse that = (QtiResponse) o;
 
-      return Objects.equals(identifier, that.identifier) && Objects.equals(value1, that.value1) && Objects.equals(value2, that.value2);
+      return Objects.equals(identifier, that.identifier) && Objects.equals(value, that.value) && Objects.equals(values, that.values);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(identifier, value1, value2);
+      return Objects.hash(identifier, value, values);
     }
 
     @Override
     public String toString() {
       return new ToStringCreator(this)
           .append("identifier", identifier)
-          .append("value1", value1)
-          .append("value2", value2)
+          .append("value", value)
+          .append("values", values)
           .toString();
     }
 

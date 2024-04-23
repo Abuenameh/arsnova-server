@@ -7,6 +7,8 @@ plugins {
   id("io.freefair.aspectj.post-compile-weaving")
   id("org.jlleitschuh.gradle.ktlint")
   id("org.springframework.boot")
+  id("com.itiviti.dotnet") version "2.0.1"
+  id("io.github.krakowski.jextract") version "0.5.0"
 }
 
 java {
@@ -55,6 +57,10 @@ dependencies {
   implementation("org.ektorp:org.ektorp.spring")
   implementation("net.particify.arsnova.integrations:connector-client")
   implementation("io.micrometer:micrometer-registry-prometheus")
+  implementation("net.java.dev.jna:jna:5.11.0")
+  implementation("com.flipkart.utils:javatuples:3.0")
+  implementation("commons-codec:commons-codec:1.15")
+  implementation("com.google.code.gson:gson:2.9.0")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("org.springframework.security:spring-security-test")
   compileOnly("org.springframework.boot:spring-boot-devtools")
@@ -66,6 +72,23 @@ dependencies {
 
 tasks.withType<Test> {
   useJUnitPlatform()
+}
+
+tasks.withType<JavaCompile>().configureEach {
+  options.compilerArgs.add("--enable-preview")
+}
+
+tasks.withType<Test>().configureEach {
+  jvmArgs("--enable-preview")
+}
+
+tasks.withType<JavaExec>().configureEach {
+  jvmArgs("--enable-preview", "--enable-native-access=ALL-UNNAMED")
+}
+
+tasks.register<Copy>("installJextract") {
+  from(tarTree("jextract-22.tar.gz"))
+  into("/home/dev/.local/")
 }
 
 tasks.jib {
@@ -98,4 +121,22 @@ spotbugs {
 
 tasks.spotbugsTest {
   enabled = false
+}
+
+dotnet {
+  projectName = "ScoringEngine"
+  solution = "qti-scoring-engine/Scoring/ScoringEngine.csproj"
+  configuration = "Release"
+  build {
+    version = "1.3.1"
+    packageVersion = "1.3.1"
+  }
+}
+
+tasks.jextract {
+  dependsOn("dotnetBuild")
+  header("${project.projectDir}/build/dotnet/net8.0/libScoringEngine.h") {
+    libraries = listOf(":${project.projectDir}/build/dotnet/net8.0/libScoringEngine.so")
+    targetPackage = "citolab.qti.scoringengine"
+  }
 }

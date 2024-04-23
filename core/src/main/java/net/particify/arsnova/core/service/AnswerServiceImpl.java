@@ -72,6 +72,7 @@ import net.particify.arsnova.core.model.TextAnswer;
 import net.particify.arsnova.core.model.TextAnswerStatistics;
 import net.particify.arsnova.core.model.TextAnswerStatistics.TextRoundStatistics;
 import net.particify.arsnova.core.model.WordcloudContent;
+import net.particify.arsnova.core.model.AnswerResult.AnswerResultState;
 import net.particify.arsnova.core.persistence.AnswerRepository;
 import net.particify.arsnova.core.persistence.DeletionRepository;
 import net.particify.arsnova.core.security.AuthenticationService;
@@ -547,6 +548,10 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
         if (selectedNumber < numericContent.getMinNumber() || selectedNumber > numericContent.getMaxNumber()) {
           throw new IllegalArgumentException("Selected number must be in content range.");
         }
+      } else if (content instanceof QtiContent qtiContent) {
+        final QtiAnswer qtiAnswer = (QtiAnswer) answer;
+        final AnswerResult result = qtiContent.determineAnswerResult(qtiAnswer);
+        qtiAnswer.setCorrect(result.getState() == AnswerResultState.CORRECT);
       }
       answer.setRound(content.getState().getRound());
     }

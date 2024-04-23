@@ -34,14 +34,20 @@ public class QtiAnswer extends Answer {
 
     }
 
-    public QtiResponse(final String identifier, final String value, final String[] values) {
+    public QtiResponse(final String identifier, final String cardinality, final String baseType, final String value, final String[] values) {
       this.identifier = identifier;
+      this.cardinality = cardinality;
+      this.baseType = baseType;
       this.value = value;
       this.values = values;
     }
 
     // @NotBlank
     private String identifier;
+
+    private String cardinality;
+
+    private String baseType;
 
     private String value;
 
@@ -55,6 +61,26 @@ public class QtiAnswer extends Answer {
     @JsonView({View.Persistence.class, View.Public.class})
     public void setIdentifier(final String identifier) {
       this.identifier = identifier;
+    }
+
+    @JsonView({View.Persistence.class, View.Public.class})
+    public String getCardinality() {
+      return cardinality;
+    }
+
+    @JsonView({View.Persistence.class, View.Public.class})
+    public void setCardinality(final String cardinality) {
+      this.cardinality = cardinality;
+    }
+
+    @JsonView({View.Persistence.class, View.Public.class})
+    public String getBaseType() {
+      return baseType;
+    }
+
+    @JsonView({View.Persistence.class, View.Public.class})
+    public void setBaseType(final String baseType) {
+      this.baseType = baseType;
     }
 
     @JsonView({View.Persistence.class, View.Public.class})
@@ -87,18 +113,20 @@ public class QtiAnswer extends Answer {
       }
       final QtiResponse that = (QtiResponse) o;
 
-      return Objects.equals(identifier, that.identifier) && Objects.equals(value, that.value) && Objects.equals(values, that.values);
+      return Objects.equals(identifier, that.identifier) && Objects.equals(cardinality, that.cardinality) && Objects.equals(baseType, that.baseType) && Objects.equals(value, that.value) && Objects.equals(values, that.values);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(identifier, value, values);
+      return Objects.hash(identifier, cardinality, baseType, value, values);
     }
 
     @Override
     public String toString() {
       return new ToStringCreator(this)
           .append("identifier", identifier)
+          .append("cardinality", cardinality)
+          .append("baseType", baseType)
           .append("value", value)
           .append("values", values)
           .toString();
@@ -107,6 +135,8 @@ public class QtiAnswer extends Answer {
   }
 
   private List<@NotNull QtiResponse> responses = new ArrayList<>();
+
+  private boolean correct = false;
 
   public QtiAnswer() {
 
@@ -124,6 +154,16 @@ public class QtiAnswer extends Answer {
   @JsonView({View.Persistence.class, View.Public.class})
   public void setResponses(final List<QtiResponse> responses) {
     this.responses = responses;
+  }
+
+  @JsonView({View.Persistence.class, View.Public.class})
+  public boolean isCorrect() {
+    return correct;
+  }
+
+  @JsonView({View.Persistence.class, View.Public.class})
+  public void setCorrect(final boolean correct) {
+    this.correct = correct;
   }
 
   @Override
@@ -151,17 +191,18 @@ public class QtiAnswer extends Answer {
     }
     final QtiAnswer that = (QtiAnswer) o;
 
-    return Objects.equals(responses, that.responses);
+    return Objects.equals(responses, that.responses) && correct == that.correct;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), responses);
+    return Objects.hash(super.hashCode(), responses, correct);
   }
 
   @Override
   protected ToStringCreator buildToString() {
     return super.buildToString()
-        .append("responses", responses);
+        .append("responses", responses)
+        .append("correct", correct);
   }
 }

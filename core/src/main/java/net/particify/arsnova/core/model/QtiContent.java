@@ -25,70 +25,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 import org.springframework.core.style.ToStringCreator;
+import java.lang.foreign.Arena;
 
 import net.particify.arsnova.core.model.serialization.View;
+import static citolab.qti.scoringengine.libScoringEngine_h.Score;
 
 public class QtiContent extends Content {
-  // public static class AnswerOption {
-  //   public AnswerOption() {
-
-  //   }
-
-  //   public AnswerOption(final String label) {
-  //     this.label = label;
-  //   }
-
-  //   @NotBlank
-  //   private String label;
-
-  //   private String renderedLabel;
-
-  //   @JsonView({View.Persistence.class, View.Public.class})
-  //   public String getLabel() {
-  //     return label;
-  //   }
-
-  //   @JsonView({View.Persistence.class, View.Public.class})
-  //   public void setLabel(final String label) {
-  //     this.label = label;
-  //   }
-
-  //   @JsonView(View.Public.class)
-  //   public String getRenderedLabel() {
-  //     return renderedLabel;
-  //   }
-
-  //   public void setRenderedLabel(final String renderedLabel) {
-  //     this.renderedLabel = renderedLabel;
-  //   }
-
-  //   @Override
-  //   public boolean equals(final Object o) {
-  //     if (this == o) {
-  //       return true;
-  //     }
-  //     if (!super.equals(o)) {
-  //       return false;
-  //     }
-  //     final AnswerOption that = (AnswerOption) o;
-
-  //     return Objects.equals(label, that.label);
-  //   }
-
-  //   @Override
-  //   public int hashCode() {
-  //     return Objects.hash(label);
-  //   }
-
-  //   @Override
-  //   public String toString() {
-  //     return new ToStringCreator(this)
-  //         .append("label", label)
-  //         .toString();
-  //   }
-
-  // }
-
   private String qtiItem;
 
   public QtiContent() {
@@ -120,7 +62,6 @@ public class QtiContent extends Content {
   @JsonView(View.Public.class)
   public boolean isScorable() {
     return true;
-    // return correctOptionIndexes.size() > 0;
   }
 
   @Override
@@ -149,12 +90,37 @@ public class QtiContent extends Content {
           AnswerResult.AnswerResultState.NEUTRAL);
     }
 
-    final double achievedPoints = 0;
-    final AnswerResult.AnswerResultState state = achievedPoints > getPoints() * 0.999
+    StringBuilder assessmentItem = new StringBuilder();
+    assessmentItem.append(String.format("<qti-assessment-item identifier=\"item\">%s</qti-assessment-item>", qtiItem));
+
+    List<QtiAnswer.QtiResponse> responses = answer.getResponses();
+    StringBuilder assessmentResult = new StringBuilder();
+
+    assessmentResult.append("<assessmentResult><itemResult identifier=\"item\">");
+    for (QtiAnswer.QtiResponse response : responses) {
+      assessmentResult.append(String.format("<responseVariable identifier=\"%s\" cardinality=\"%s\" baseType=\"%s\"><candidateResponse>", response.getIdentifier(), response.getCardinality(), response.getBaseType()));
+      switch (response.getCardinality()) {
+        case "single":
+        assessmentResult.append(String.format("<value>%s</value>", response.getValue()));
+          break;
+        case "multiple":
+          for (String value : response.getValues()) {
+            assessmentResult.append(String.format("<value>%s</value>", value));
+          }
+          break;
+      }
+      assessmentResult.append("</candidateResponse></responseVariable>");
+    }
+    assessmentResult.append("</itemResult></assessmentResult>");
+
+    double achievedPoints = 0;
+    try (var arena = Arena.ofConfined()) {
+      var assessmentItemStr = arena.allocateUtf8String(assessmentItem.toString());
+      var assessmentResultStr = arena.allocateUtf8String(assessmentResult.toString());
+      achievedPoints = Score(assessmentItemStr, assessmentResultStr) * this.getPoints();
+    }
+    final AnswerResult.AnswerResultState state = achievedPoints > 0.999
         ? AnswerResult.AnswerResultState.CORRECT : AnswerResult.AnswerResultState.WRONG;
-    // final double achievedPoints = calculateAchievedPoints(answer.getSelectedChoiceIndexes());
-    // final AnswerResult.AnswerResultState state = achievedPoints > getPoints() * 0.999
-    //     ? AnswerResult.AnswerResultState.CORRECT : AnswerResult.AnswerResultState.WRONG;
 
     return new AnswerResult(
         this.id,
@@ -162,17 +128,6 @@ public class QtiContent extends Content {
         this.getPoints(),
         state);
   }
-
-  // public double calculateAchievedPoints(final List<Integer> selectedChoiceIndexes) {
-  //   if (getFormat() == Format.SORT) {
-  //     return selectedChoiceIndexes.equals(correctOptionIndexes) ? getPoints() : 0;
-  //   }
-
-  //   final double pointsPerOption = 1.0 * getPoints() / correctOptionIndexes.size();
-  //   return Math.max(0, selectedChoiceIndexes.stream()
-  //       .mapToDouble(i -> (correctOptionIndexes.contains(i) ? pointsPerOption : -pointsPerOption))
-  //       .sum());
-  // }
 
   @Override
   public QtiContent copy() {

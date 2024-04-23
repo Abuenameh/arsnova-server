@@ -1,3 +1,6 @@
 [submodule "webclient"]
 	path = webclient
 	url = ../arsnova-webclient
+[submodule "core/qti-scoring-engine"]
+	path = core/qti-scoring-engine
+	url = https://github.com/Abuenameh/qti-scoring-engine

@@ -91,27 +91,43 @@ public class QtiContent extends Content {
     }
 
     StringBuilder assessmentItem = new StringBuilder();
-    assessmentItem.append(String.format("<qti-assessment-item identifier=\"item\">%s</qti-assessment-item>", qtiItem));
+    assessmentItem.append(STR."""
+                                  <qti-assessment-item identifier="item">
+                                      \{qtiItem}
+                                  </qti-assessment-item>
+                              """);
 
     List<QtiAnswer.QtiResponse> responses = answer.getResponses();
     StringBuilder assessmentResult = new StringBuilder();
 
-    assessmentResult.append("<assessmentResult><itemResult identifier=\"item\">");
+    assessmentResult.append("""
+                                <assessmentResult>
+                                    <itemResult identifier="item">
+                            """);
     for (QtiAnswer.QtiResponse response : responses) {
-      assessmentResult.append(String.format("<responseVariable identifier=\"%s\" cardinality=\"%s\" baseType=\"%s\"><candidateResponse>", response.getIdentifier(), response.getCardinality(), response.getBaseType()));
+      assessmentResult.append(STR."""
+                                      <responseVariable identifier="\{response.getIdentifier()}" cardinality="\{response.getCardinality()}" baseType="\{response.getBaseType()}">
+                                          <candidateResponse>
+                                  """);
       switch (response.getCardinality()) {
         case "single":
-        assessmentResult.append(String.format("<value>%s</value>", response.getValue()));
+          assessmentResult.append(STR."<value>\{response.getValue()}</value>");
           break;
         case "multiple":
           for (String value : response.getValues()) {
-            assessmentResult.append(String.format("<value>%s</value>", value));
+            assessmentResult.append(STR."<value>\{value}</value>");
           }
           break;
       }
-      assessmentResult.append("</candidateResponse></responseVariable>");
+      assessmentResult.append("""
+                                      </candidateResponse>
+                                  </responseVariable>
+                              """);
     }
-    assessmentResult.append("</itemResult></assessmentResult>");
+    assessmentResult.append("""
+                                    </itemResult>
+                                </assessmentResult>
+                            """);
 
     double achievedPoints = 0;
     try (var arena = Arena.ofConfined()) {

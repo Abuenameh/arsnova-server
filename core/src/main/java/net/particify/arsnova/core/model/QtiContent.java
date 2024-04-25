@@ -26,9 +26,11 @@ import java.util.Objects;
 import java.util.stream.IntStream;
 import org.springframework.core.style.ToStringCreator;
 import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 
 import net.particify.arsnova.core.model.serialization.View;
 import static citolab.qti.scoringengine.libScoringEngine_h.Score;
+import citolab.qti.scoringengine.ScoreResult;
 
 public class QtiContent extends Content {
   private String qtiItem;
@@ -130,13 +132,17 @@ public class QtiContent extends Content {
                             """);
 
     double achievedPoints = 0;
-    try (var arena = Arena.ofConfined()) {
-      var assessmentItemStr = arena.allocateUtf8String(assessmentItem.toString());
-      var assessmentResultStr = arena.allocateUtf8String(assessmentResult.toString());
-      achievedPoints = Score(assessmentItemStr, assessmentResultStr) * this.getPoints();
+    boolean partiallyCorrect = false;
+    try (Arena arena = Arena.ofConfined()) {
+      MemorySegment assessmentItemStr = arena.allocateUtf8String(assessmentItem.toString());
+      MemorySegment assessmentResultStr = arena.allocateUtf8String(assessmentResult.toString());
+      MemorySegment scoreResult = ScoreResult.allocate(arena);
+      Score(assessmentItemStr, assessmentResultStr, scoreResult);
+      achievedPoints = ScoreResult.score(scoreResult) * this.getPoints();
+      partiallyCorrect = ScoreResult.partiallyCorrect(scoreResult) == 1;
     }
-    final AnswerResult.AnswerResultState state = achievedPoints > 0.999
-        ? AnswerResult.AnswerResultState.CORRECT : AnswerResult.AnswerResultState.WRONG;
+    final AnswerResult.AnswerResultState state = achievedPoints > 0.999 * this.getPoints()
+        ? AnswerResult.AnswerResultState.CORRECT : (achievedPoints > 0 && partiallyCorrect) ? AnswerResult.AnswerResultState.PARTIALLY_CORRECT : AnswerResult.AnswerResultState.WRONG;
 
     return new AnswerResult(
         this.id,

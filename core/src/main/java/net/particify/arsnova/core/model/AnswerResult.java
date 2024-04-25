@@ -47,6 +47,7 @@ public class AnswerResult {
     ABSTAINED,
     CORRECT,
     WRONG,
-    NEUTRAL
+    NEUTRAL,
+    PARTIALLY_CORRECT
   }
 }

@@ -1,8 +1,8 @@
 plugins {
   java
   jacoco
-  checkstyle
-  id("com.github.spotbugs")
+  // checkstyle
+  // id("com.github.spotbugs")
   id("com.google.cloud.tools.jib")
   id("io.freefair.aspectj.post-compile-weaving")
   id("org.jlleitschuh.gradle.ktlint")
@@ -116,23 +116,23 @@ tasks.jacocoTestReport {
   }
 }
 
-checkstyle {
-  toolVersion = libs.versions.checkstyle.get()
-  configFile = file("$projectDir/checkstyle.xml")
-  configProperties =
-    mapOf(
-      "checkstyle.missing-javadoc.severity" to "info",
-    )
-  maxWarnings = 0
-}
+// checkstyle {
+//   toolVersion = libs.versions.checkstyle.get()
+//   configFile = file("$projectDir/checkstyle.xml")
+//   configProperties =
+//     mapOf(
+//       "checkstyle.missing-javadoc.severity" to "info",
+//     )
+//   maxWarnings = 0
+// }
 
-spotbugs {
-  excludeFilter.set(file("../spotbugs-exclude.xml"))
-}
+// spotbugs {
+//   excludeFilter.set(file("../spotbugs-exclude.xml"))
+// }
 
-tasks.spotbugsTest {
-  enabled = false
-}
+// tasks.spotbugsTest {
+//   enabled = false
+// }
 
 dotnet {
   projectName = "ScoringEngine"

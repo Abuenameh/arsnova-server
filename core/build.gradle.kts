@@ -105,7 +105,10 @@ tasks.register<Copy>("installScoringEngine") {
 tasks.jib {
   jib {
     from {
-      image = "eclipse-temurin:21-alpine"
+      image = "abuenameh/eclipse-temurin-dotnet:21-alpine"
+    }
+    container {
+      jvmFlags = listOf("--enable-preview", "--enable-native-access=ALL-UNNAMED")
     }
   }
 }

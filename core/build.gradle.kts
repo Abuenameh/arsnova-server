@@ -150,7 +150,7 @@ dotnet {
 tasks.jextract {
   dependsOn("dotnetBuild")
   header("${project.projectDir}/build/dotnet/net8.0/libScoringEngine.h") {
-    libraries = listOf(":${project.projectDir}/build/dotnet/net8.0/libScoringEngine.so")
+    libraries = listOf("ScoringEngine")
     targetPackage = "citolab.qti.scoringengine"
   }
 }

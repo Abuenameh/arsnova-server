@@ -91,6 +91,17 @@ tasks.register<Copy>("installJextract") {
   into("/home/dev/.local/")
 }
 
+tasks.register<Copy>("installScoringEngine") {
+  dependsOn("dotnetBuild")
+  from("${project.projectDir}/build/dotnet/net8.0/ScoringEngine.dll")
+  from("${project.projectDir}/build/dotnet/net8.0/Jint.dll")
+  from("${project.projectDir}/build/dotnet/net8.0/Esprima.dll")
+  from("${project.projectDir}/build/dotnet/net8.0/Microsoft.Extensions.Logging.Abstractions.dll")
+  from("${project.projectDir}/build/dotnet/net8.0/libScoringEngine.so")
+  from("${project.projectDir}/build/dotnet/net8.0/ScoringEngine.runtimeconfig.json")
+  into("${project.projectDir}/src/main/jib/usr/lib")
+}
+
 tasks.jib {
   jib {
     from {

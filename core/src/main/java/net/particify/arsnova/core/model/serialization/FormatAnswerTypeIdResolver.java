@@ -31,8 +31,8 @@ import net.particify.arsnova.core.model.Content;
 import net.particify.arsnova.core.model.MultipleTextsAnswer;
 import net.particify.arsnova.core.model.NumericAnswer;
 import net.particify.arsnova.core.model.PrioritizationAnswer;
-import net.particify.arsnova.core.model.TextAnswer;
 import net.particify.arsnova.core.model.QtiAnswer;
+import net.particify.arsnova.core.model.TextAnswer;
 
 public class FormatAnswerTypeIdResolver extends TypeIdResolverBase {
   @Override

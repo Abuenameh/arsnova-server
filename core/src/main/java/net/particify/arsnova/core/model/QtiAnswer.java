@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.core.style.ToStringCreator;
@@ -113,7 +114,7 @@ public class QtiAnswer extends Answer {
       }
       final QtiResponse that = (QtiResponse) o;
 
-      return Objects.equals(identifier, that.identifier) && Objects.equals(cardinality, that.cardinality) && Objects.equals(baseType, that.baseType) && Objects.equals(value, that.value) && Objects.equals(values, that.values);
+      return Objects.equals(identifier, that.identifier) && Objects.equals(cardinality, that.cardinality) && Objects.equals(baseType, that.baseType) && Objects.equals(value, that.value) && Arrays.equals(values, that.values);
     }
 
     @Override

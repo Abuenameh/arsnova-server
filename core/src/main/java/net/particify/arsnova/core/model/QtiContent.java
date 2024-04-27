@@ -176,7 +176,7 @@ public class QtiContent extends Content {
     }
     final QtiContent that = (QtiContent) o;
 
-    return qtiItem == that.qtiItem;
+    return Objects.equals(qtiItem, that.qtiItem);
   }
 
   @Override

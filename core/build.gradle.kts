@@ -7,8 +7,8 @@ plugins {
   id("io.freefair.aspectj.post-compile-weaving")
   id("org.jlleitschuh.gradle.ktlint")
   id("org.springframework.boot")
-  id("com.itiviti.dotnet") version "2.0.1"
   id("io.github.krakowski.jextract") version "0.5.0"
+  id("xyz.ronella.dotnet.core") version "3.1.0"
 }
 
 java {
@@ -92,20 +92,22 @@ tasks.register<Copy>("installJextract") {
 }
 
 tasks.register<Copy>("installScoringEngine") {
-  dependsOn("dotnetBuild")
-  from("${project.projectDir}/build/dotnet/net8.0/ScoringEngine.dll")
-  from("${project.projectDir}/build/dotnet/net8.0/Jint.dll")
-  from("${project.projectDir}/build/dotnet/net8.0/Esprima.dll")
-  from("${project.projectDir}/build/dotnet/net8.0/Microsoft.Extensions.Logging.Abstractions.dll")
-  from("${project.projectDir}/build/dotnet/net8.0/libScoringEngine.so")
-  from("${project.projectDir}/build/dotnet/net8.0/ScoringEngine.runtimeconfig.json")
+  dependsOn("dotnetPublish")
+  from("${project.projectDir}/build/dotnet/net8.0/linux-x64/publish/libScoringEngine.so")
+  // dependsOn("dotnetBuild")
+  // from("${project.projectDir}/build/dotnet/net8.0/ScoringEngine.dll")
+  // from("${project.projectDir}/build/dotnet/net8.0/Jint.dll")
+  // from("${project.projectDir}/build/dotnet/net8.0/Esprima.dll")
+  // from("${project.projectDir}/build/dotnet/net8.0/Microsoft.Extensions.Logging.Abstractions.dll")
+  // from("${project.projectDir}/build/dotnet/net8.0/libScoringEngine.so")
+  // from("${project.projectDir}/build/dotnet/net8.0/ScoringEngine.runtimeconfig.json")
   into("${project.projectDir}/src/main/jib/usr/lib")
 }
 
 tasks.jib {
   jib {
     from {
-      image = "abuenameh/eclipse-temurin-dotnet:21-alpine"
+      image = "eclipse-temurin:21"
     }
     container {
       jvmFlags = listOf("--enable-preview", "--enable-native-access=ALL-UNNAMED")
@@ -137,19 +139,13 @@ tasks.jacocoTestReport {
 //   enabled = false
 // }
 
-dotnet {
-  projectName = "ScoringEngine"
-  solution = "qti-scoring-engine/Scoring/ScoringEngine.csproj"
-  configuration = "Release"
-  build {
-    version = "1.3.1"
-    packageVersion = "1.3.1"
-  }
+tasks.dotnetPublish {
+  args = listOf("qti-scoring-engine/Scoring/ScoringEngine.csproj")
 }
 
 tasks.jextract {
-  dependsOn("dotnetBuild")
-  header("${project.projectDir}/build/dotnet/net8.0/libScoringEngine.h") {
+  dependsOn("dotnetPublish")
+  header("${project.projectDir}/build/dotnet/net8.0/linux-x64/libScoringEngine.h") {
     libraries = listOf("ScoringEngine")
     targetPackage = "citolab.qti.scoringengine"
   }

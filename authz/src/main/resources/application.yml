@@ -43,6 +43,8 @@ spring:
           multiplier: 2
 security:
   jwt:
+    secret: 2991de914fa70fd24d69fd17de620380fb2396f5141b191313b27faa98060300
+    server-id: ars.abuenameh.com
     validity-period: 5m
   authorize-uri-header: X-Forwarded-Uri
   authorize-uri-prefix: /api

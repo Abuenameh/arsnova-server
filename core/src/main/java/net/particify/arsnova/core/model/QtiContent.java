@@ -56,12 +56,6 @@ public class QtiContent extends Content {
 
   @Override
   @JsonView(View.Public.class)
-  public int getPoints() {
-    return isScorable() ? 10 : 0;
-  }
-
-  @Override
-  @JsonView(View.Public.class)
   public boolean isScorable() {
     return true;
   }
@@ -80,7 +74,9 @@ public class QtiContent extends Content {
       return new AnswerResult(
           this.id,
           0,
+          0,
           this.getPoints(),
+          0,
           AnswerResult.AnswerResultState.ABSTAINED);
     }
 
@@ -88,7 +84,9 @@ public class QtiContent extends Content {
       return new AnswerResult(
           this.id,
           0,
+          0,
           this.getPoints(),
+          0,
           AnswerResult.AnswerResultState.NEUTRAL);
     }
 
@@ -143,11 +141,15 @@ public class QtiContent extends Content {
     }
     final AnswerResult.AnswerResultState state = achievedPoints > 0.999 * this.getPoints()
         ? AnswerResult.AnswerResultState.CORRECT : (achievedPoints > 0 && partiallyCorrect) ? AnswerResult.AnswerResultState.PARTIALLY_CORRECT : AnswerResult.AnswerResultState.WRONG;
+    final double competitivePoints =
+        calculateCompetitivePoints(answer.getCreationTimestamp().toInstant(), achievedPoints);
 
     return new AnswerResult(
         this.id,
         achievedPoints,
+        competitivePoints,
         this.getPoints(),
+        answer.getDurationMs(),
         state);
   }
 

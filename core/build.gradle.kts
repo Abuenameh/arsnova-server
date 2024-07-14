@@ -30,6 +30,7 @@ repositories {
 dependencies {
   implementation(platform(project(":platform")))
   implementation(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
+  implementation(project(":common"))
   implementation("org.springframework.boot:spring-boot-starter-actuator")
   implementation("org.springframework.boot:spring-boot-starter-amqp")
   implementation("org.springframework.boot:spring-boot-starter-cache")
@@ -67,7 +68,9 @@ dependencies {
   compileOnly(libs.spotbugs.annotations)
   aspect(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
   aspect("org.springframework:spring-aspects")
-  aspect("org.springframework.security:spring-security-aspects")
+  aspect("org.springframework.security:spring-security-aspects") {
+    exclude(group = "io.micrometer", module = "micrometer-observation")
+  }
 }
 
 tasks.withType<Test> {

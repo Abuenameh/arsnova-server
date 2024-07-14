@@ -1,13 +1,18 @@
 package net.particify.arsnova.core.service;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import net.particify.arsnova.core.model.Answer;
 import net.particify.arsnova.core.model.AnswerStatistics;
+import net.particify.arsnova.core.model.AnswerStatisticsSummaryEntry;
 import net.particify.arsnova.core.model.AnswerStatisticsUserSummary;
 import net.particify.arsnova.core.model.ChoiceAnswerStatistics;
+import net.particify.arsnova.core.model.ContentGroup;
+import net.particify.arsnova.core.model.LeaderboardEntry;
 import net.particify.arsnova.core.model.NumericAnswerStatistics;
 import net.particify.arsnova.core.model.PrioritizationAnswerStatistics;
 import net.particify.arsnova.core.model.TextAnswer;
@@ -141,5 +146,22 @@ public class SecuredAnswerService extends AbstractSecuredEntityServiceImpl<Answe
   @PreAuthorize("hasPermission(#answer, 'moderate')")
   public void hideTextAnswer(final TextAnswer answer, final boolean hidden) {
     answerService.hideTextAnswer(answer, hidden);
+  }
+
+  @Override
+  @PreAuthorize("hasPermission(#contentGroup, 'read')")
+  public Collection<LeaderboardEntry> buildAliasedLeaderboard(
+      final ContentGroup contentGroup,
+      final String currentContentId,
+      final Locale locale) {
+    return answerService.buildAliasedLeaderboard(contentGroup, currentContentId, locale);
+  }
+
+  @PreAuthorize("hasPermission(#roomId, 'room', 'read')")
+  @Override
+  public List<AnswerStatisticsSummaryEntry> calculateStatsByContentIds(
+      final String roomId,
+      final List<String> contentIds) {
+    return answerService.calculateStatsByContentIds(roomId, contentIds);
   }
 }

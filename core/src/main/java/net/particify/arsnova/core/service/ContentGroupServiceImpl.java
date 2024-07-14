@@ -157,6 +157,7 @@ public class ContentGroupServiceImpl extends DefaultEntityServiceImpl<ContentGro
     final ContentGroup contentGroup = new ContentGroup();
     contentGroup.setRoomId(roomId);
     contentGroup.setName(template.getName());
+    contentGroup.setGroupType(template.getGroupType());
     contentGroup.setTemplateId(template.getId());
     final List<Content> contents = contentService.createFromTemplates(roomId, template, contentTemplates);
     contentGroup.setContentIds(contents.stream().map(c -> c.getId()).collect(Collectors.toList()));
@@ -169,6 +170,7 @@ public class ContentGroupServiceImpl extends DefaultEntityServiceImpl<ContentGro
     try {
       final List<Content> contents = csvService.toObject(csv, ContentExport.class).stream()
           .map(c -> c.toContent())
+          .filter(c -> determineCompatibility(contentGroup.getGroupType(), c))
           .collect(Collectors.toList());
       for (final Content content : contents) {
         content.setRoomId(contentGroup.getRoomId());
@@ -180,6 +182,39 @@ public class ContentGroupServiceImpl extends DefaultEntityServiceImpl<ContentGro
     } catch (final IOException e) {
       throw new BadRequestException("Could not import contents from CSV.", e);
     }
+  }
+
+  private boolean determineCompatibility(final ContentGroup.GroupType type, final Content content) {
+    if (type == ContentGroup.GroupType.MIXED || content.getFormat() == Content.Format.SLIDE) {
+      return true;
+    }
+    if (type == ContentGroup.GroupType.FLASHCARDS) {
+      return content.getFormat() == Content.Format.FLASHCARD;
+    }
+    final List<Content.Format> quizTypes = List.of(
+        Content.Format.CHOICE,
+        Content.Format.BINARY,
+        Content.Format.NUMERIC,
+        Content.Format.SORT);
+    if (type == ContentGroup.GroupType.QUIZ
+        && quizTypes.contains(content.getFormat())
+        && content.isScorable()) {
+      return true;
+    }
+    final List<Content.Format> surveyTypes = List.of(
+        Content.Format.CHOICE,
+        Content.Format.BINARY,
+        Content.Format.NUMERIC,
+        Content.Format.SCALE,
+        Content.Format.PRIORITIZATION,
+        Content.Format.TEXT,
+        Content.Format.WORDCLOUD);
+    if (type == ContentGroup.GroupType.SURVEY
+        && surveyTypes.contains(content.getFormat())
+        && !content.isScorable()) {
+      return true;
+    }
+    return false;
   }
 
   @EventListener

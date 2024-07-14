@@ -18,12 +18,17 @@
 
 package net.particify.arsnova.core.service;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 import net.particify.arsnova.core.model.Answer;
 import net.particify.arsnova.core.model.AnswerStatistics;
+import net.particify.arsnova.core.model.AnswerStatisticsSummaryEntry;
 import net.particify.arsnova.core.model.AnswerStatisticsUserSummary;
 import net.particify.arsnova.core.model.ChoiceAnswerStatistics;
+import net.particify.arsnova.core.model.ContentGroup;
+import net.particify.arsnova.core.model.LeaderboardEntry;
 import net.particify.arsnova.core.model.NumericAnswerStatistics;
 import net.particify.arsnova.core.model.QtiAnswerStatistics;
 import net.particify.arsnova.core.model.PrioritizationAnswerStatistics;
@@ -68,4 +73,9 @@ public interface AnswerService extends EntityService<Answer> {
   Answer create(Answer answer);
 
   void hideTextAnswer(TextAnswer answer, boolean hidden);
+
+  Collection<LeaderboardEntry> buildAliasedLeaderboard(
+      ContentGroup contentGroup, String currentContentId, Locale locale);
+
+  List<AnswerStatisticsSummaryEntry> calculateStatsByContentIds(String roomId, List<String> contentIds);
 }

@@ -48,4 +48,8 @@ public interface ContentService extends EntityService<Content> {
       String roomId,
       ContentGroupTemplate contentGroupTemplate,
       List<ContentTemplate> templates);
+
+  void start(String contentId);
+
+  void stop(String contentId);
 }

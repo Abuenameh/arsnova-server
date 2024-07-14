@@ -18,11 +18,16 @@
 
 package net.particify.arsnova.core.service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -37,6 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -51,12 +58,17 @@ import net.particify.arsnova.core.event.BulkChangeEvent;
 import net.particify.arsnova.core.model.Answer;
 import net.particify.arsnova.core.model.AnswerResult;
 import net.particify.arsnova.core.model.AnswerStatistics;
+import net.particify.arsnova.core.model.AnswerStatisticsSummaryEntry;
 import net.particify.arsnova.core.model.AnswerStatisticsUserSummary;
 import net.particify.arsnova.core.model.ChoiceAnswerStatistics;
 import net.particify.arsnova.core.model.ChoiceQuestionContent;
 import net.particify.arsnova.core.model.Content;
+import net.particify.arsnova.core.model.ContentGroup;
+import net.particify.arsnova.core.model.ContentIdRoundResultKey;
 import net.particify.arsnova.core.model.Deletion.Initiator;
 import net.particify.arsnova.core.model.GridImageContent;
+import net.particify.arsnova.core.model.LeaderboardCurrentResult;
+import net.particify.arsnova.core.model.LeaderboardEntry;
 import net.particify.arsnova.core.model.MultipleTextsAnswer;
 import net.particify.arsnova.core.model.NumericAnswer;
 import net.particify.arsnova.core.model.NumericAnswerStatistics;
@@ -67,6 +79,7 @@ import net.particify.arsnova.core.model.QtiContent;
 import net.particify.arsnova.core.model.PrioritizationAnswerStatistics;
 import net.particify.arsnova.core.model.PrioritizationChoiceContent;
 import net.particify.arsnova.core.model.Room;
+import net.particify.arsnova.core.model.RoomUserAlias;
 import net.particify.arsnova.core.model.ScaleChoiceContent;
 import net.particify.arsnova.core.model.TextAnswer;
 import net.particify.arsnova.core.model.TextAnswerStatistics;
@@ -95,16 +108,20 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
   private final Map<AnswerUniqueKey, Answer> queuedAnswers = new ConcurrentHashMap<>();
   private RoomService roomService;
   private ContentService contentService;
+  private RoomUserAliasService roomUserAliasService;
   private AnswerRepository answerRepository;
   private UserService userService;
   private AuthenticationService authenticationService;
+  private CacheManager cacheManager;
 
   public AnswerServiceImpl(
       final AnswerRepository repository,
       final DeletionRepository deletionRepository,
       final RoomService roomService,
       final UserService userService,
+      final RoomUserAliasService roomUserAliasService,
       final AuthenticationService authenticationService,
+      final CacheManager cacheManager,
       @Qualifier("defaultJsonMessageConverter") final
       MappingJackson2HttpMessageConverter jackson2HttpMessageConverter,
       final Validator validator) {
@@ -112,7 +129,9 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
     this.answerRepository = repository;
     this.roomService = roomService;
     this.userService = userService;
+    this.roomUserAliasService = roomUserAliasService;
     this.authenticationService = authenticationService;
+    this.cacheManager = cacheManager;
   }
 
   @Autowired
@@ -124,6 +143,7 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
   public void flushAnswerQueue() {
     if (answerQueue.isEmpty()) {
       // no need to send an empty bulk request.
+      clearContentGroupLeaderboardCache();
       return;
     }
 
@@ -143,7 +163,9 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
         this.eventPublisher.publishEvent(new BeforeCreationEvent<>(this, e));
       }
       answerRepository.saveAll(new ArrayList<>(answers.values()));
+      clearContentGroupLeaderboardCache();
       for (final Answer e : answers.values()) {
+        evictLeaderboardCacheEntries(e.getContentId());
         this.eventPublisher.publishEvent(new AfterCreationEvent<>(this, e));
       }
       this.eventPublisher.publishEvent(new BulkChangeEvent<>(this, Answer.class, answers.values()));
@@ -162,6 +184,7 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
     final Iterable<Answer> answers = answerRepository.findStubsByContentIdAndHidden(content.getId(), false);
     answers.forEach(a -> a.setRoomId(content.getRoomId()));
     delete(answers, Initiator.USER);
+    evictLeaderboardCacheEntries(contentId);
   }
 
   @Override
@@ -188,12 +211,12 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
       } else {
         optionCount = ((ChoiceQuestionContent) content).getOptions().size();
       }
-      stats = answerRepository.findByContentIdRound(
+      stats = answerRepository.findStatisticsByContentIdRound(
           content.getId(), round, optionCount);
     } else if (content instanceof GridImageContent) {
       final GridImageContent.Grid grid = ((GridImageContent) content).getGrid();
       optionCount = grid.getColumns() * grid.getRows();
-      stats = answerRepository.findByContentIdRound(
+      stats = answerRepository.findStatisticsByContentIdRound(
           content.getId(), round, optionCount);
     } else {
       throw new IllegalStateException(
@@ -274,7 +297,7 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
     final List<AnswerResult> answerResultList = contents.stream()
         .map(c -> answerResults.containsKey(c.getId())
             ? answerResults.get(c.getId())
-            : new AnswerResult(c.getId(), 0, c.getPoints(), AnswerResult.AnswerResultState.UNANSWERED))
+            : new AnswerResult(c.getId(), 0, 0, c.getPoints(), 0, AnswerResult.AnswerResultState.UNANSWERED))
         .collect(Collectors.toList());
 
     return new AnswerStatisticsUserSummary(
@@ -296,7 +319,8 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
     } else {
       bannedKeywords = Collections.emptySet();
     }
-    final List<MultipleTextsAnswer> answers = answerRepository.findByContentIdRoundForText(contentId, round);
+    final List<MultipleTextsAnswer> answers =
+        answerRepository.findByContentIdRound(MultipleTextsAnswer.class, contentId, round);
     /* Flatten lists of individual answers to a combined map of texts with
      * count */
     final Map<String, Long> textCounts = answers.stream()
@@ -363,15 +387,18 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
     if (content == null) {
       throw new NotFoundException();
     }
-    final List<NumericAnswer> answers = answerRepository.findByContentIdRoundForNumeric(contentId, round);
+    final List<NumericAnswer> answers = answerRepository.findByContentIdRound(NumericAnswer.class, contentId, round);
     final NumericAnswerStatistics stats = new NumericAnswerStatistics();
     stats.setContentId(contentId);
     final NumericAnswerStatistics.NumericRoundStatistics roundStats =
         new NumericAnswerStatistics.NumericRoundStatistics();
     roundStats.setRound(round);
     roundStats.setAbstentionCount((int) answers.stream().filter(a -> a.getSelectedNumber() == null).count());
-    roundStats.setAnswerCount(answers.size());
-    final List<Double> numbers = answers.stream().map(NumericAnswer::getSelectedNumber).toList();
+    final List<Double> numbers = answers.stream()
+        .map(NumericAnswer::getSelectedNumber)
+        .filter(n -> n != null)
+        .toList();
+    roundStats.setAnswerCount(numbers.size());
     final Map<Double, Long> numberCounts = numbers.stream()
         .collect(Collectors.groupingBy(
         Function.identity(),
@@ -525,10 +552,25 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
       }
     }
 
+    answer.setCreationTimestamp(new Date());
     if (answer.getCreatorId() == null) {
       answer.setCreatorId(user.getId());
     }
     answer.setRoomId(content.getRoomId());
+
+    if (content.isScorable()) {
+      final double achievedPoints = content.calculateAchievedPoints(answer);
+      if (content.getState().getAnsweringEndTime() == null) {
+        answer.setPoints((int) Math.round(achievedPoints));
+      } else {
+        answer.setPoints((int) Math.round(content.calculateCompetitivePoints(
+            answer.getCreationTimestamp().toInstant(), achievedPoints)));
+        final int timeLeft = (int) Instant.now().until(
+            content.getState().getAnsweringEndTime().toInstant(), ChronoUnit.MILLIS);
+        answer.setDurationMs(content.getDuration() * 1000 - timeLeft);
+      }
+    }
+    answer.setResult(content.determineAnswerResult(answer).getState());
 
     if (content.getFormat() == Content.Format.TEXT) {
       answer.setRound(0);
@@ -544,8 +586,9 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
                     specialCharPattern.matcher(t.toLowerCase()).replaceAll("")))
                 .collect(Collectors.toList()));
       } else if (content instanceof NumericContent numericContent) {
-        final double selectedNumber = ((NumericAnswer) answer).getSelectedNumber();
-        if (selectedNumber < numericContent.getMinNumber() || selectedNumber > numericContent.getMaxNumber()) {
+        final Double selectedNumber = ((NumericAnswer) answer).getSelectedNumber();
+        if (selectedNumber != null
+            && (selectedNumber < numericContent.getMinNumber() || selectedNumber > numericContent.getMaxNumber())) {
           throw new IllegalArgumentException("Selected number must be in content range.");
         }
       } else if (content instanceof QtiContent qtiContent) {
@@ -578,6 +621,80 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
   public void hideTextAnswer(final TextAnswer answer, final boolean hidden) {
     answer.setHidden(hidden);
     update(answer);
+  }
+
+  @Override
+  public Collection<LeaderboardEntry> buildAliasedLeaderboard(
+      final ContentGroup contentGroup,
+      final String currentContentId,
+      final Locale locale) {
+    final Map<String, RoomUserAlias> aliasMappings =
+        roomUserAliasService.getUserAliasMappingsByRoomId(contentGroup.getRoomId(), locale);
+    final Map<String, LeaderboardCurrentResult> currentResults =
+        currentContentId != null ? buildContentLeaderboard(currentContentId) : new HashMap<>();
+    return buildContentGroupLeaderboard(contentGroup).entrySet().stream()
+        .map(es -> new LeaderboardEntry(
+            aliasMappings.get(es.getKey()), es.getValue(), currentResults.get(es.getKey())))
+        .collect(Collectors.toList());
+  }
+
+  @Cacheable(cacheNames = "leaderboard-contentgroup")
+  private Map<String, Integer> buildContentGroupLeaderboard(final ContentGroup contentGroup) {
+    final Map<String, Integer> leaderboard = new HashMap<>();
+    final List<Content> contents = contentService.get(contentGroup.getContentIds());
+    for (final Content content : contents) {
+      final Map<String, Integer> contentScores =
+          answerRepository.findUserScoreByContentIdRound(content.getId(), content.getState().getRound());
+      for (final Map.Entry<String, Integer> entry : contentScores.entrySet()) {
+        final int score = leaderboard.getOrDefault(entry.getKey(), 0);
+        leaderboard.put(entry.getKey(), score + entry.getValue());
+      }
+    }
+    return leaderboard;
+  }
+
+  @Cacheable(cacheNames = "leaderboard-content")
+  private Map<String, LeaderboardCurrentResult> buildContentLeaderboard(final String contentId) {
+    final Content content = contentService.get(contentId);
+    final List<Answer> answers = answerRepository.findByContentIdRound(
+        Answer.class, contentId, content.getState().getRound());
+    return answers.stream()
+      .collect(Collectors.toMap(
+          a -> a.getCreatorId(),
+          a -> new LeaderboardCurrentResult(
+              a.getPoints(),
+              a.getDurationMs(),
+             content.determineAnswerResult(a).getState() == AnswerResult.AnswerResultState.CORRECT)));
+  }
+
+  public List<AnswerStatisticsSummaryEntry> calculateStatsByContentIds(
+      final String roomId,
+      final List<String> contentIds) {
+    final Map<ContentIdRoundResultKey, Integer> counts =
+        answerRepository.countByRoomIdGroupByContentIdRoundResult(roomId);
+    final List<AnswerStatisticsSummaryEntry> results = counts.entrySet().stream()
+        .filter(entry -> contentIds.contains(entry.getKey().contentId()))
+        .map(entry -> {
+          final var k = entry.getKey();
+          return new AnswerStatisticsSummaryEntry(
+              k.contentId(),
+              k.round(),
+              k.result(),
+              entry.getValue());
+        })
+        .collect(Collectors.toList());
+    if (results.stream().anyMatch(e -> e.result() == AnswerResult.AnswerResultState.UNKNOWN)) {
+      throw new NotFoundException("Statistics are not available for this content group.");
+    }
+    return results;
+  }
+
+  private void evictLeaderboardCacheEntries(final String contentId) {
+    cacheManager.getCache("leaderboard-content").evict(contentId);
+  }
+
+  public void clearContentGroupLeaderboardCache() {
+    cacheManager.getCache("leaderboard-contentgroup").clear();
   }
 
   private record AnswerUniqueKey(String userId, String contentId) { }

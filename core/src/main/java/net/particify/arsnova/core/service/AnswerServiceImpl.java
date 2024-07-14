@@ -455,7 +455,7 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
     if (content == null) {
       throw new NotFoundException();
     }
-    final List<QtiAnswer> answers = answerRepository.findByContentIdRoundForQti(contentId, round);
+    final List<QtiAnswer> answers = answerRepository.findByContentIdRound(QtiAnswer.class, contentId, round);
     final QtiAnswerStatistics stats = new QtiAnswerStatistics();
     stats.setContentId(contentId);
     final QtiAnswerStatistics.QtiRoundStatistics roundStats =

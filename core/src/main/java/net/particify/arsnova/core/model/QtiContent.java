@@ -90,6 +90,30 @@ public class QtiContent extends Content {
           AnswerResult.AnswerResultState.NEUTRAL);
     }
 
+    final double achievedPoints = calculateAchievedPoints(answer.getResponses());
+    final AnswerResult.AnswerResultState state = achievedPoints > 0.999 * this.getPoints()
+        ? AnswerResult.AnswerResultState.CORRECT : (achievedPoints > 0 && achievedPoints < 0.999 * this.getPoints()) ? AnswerResult.AnswerResultState.PARTIALLY_CORRECT : AnswerResult.AnswerResultState.WRONG;
+    final double competitivePoints =
+        calculateCompetitivePoints(answer.getCreationTimestamp().toInstant(), achievedPoints);
+
+    return new AnswerResult(
+        this.id,
+        achievedPoints,
+        competitivePoints,
+        this.getPoints(),
+        answer.getDurationMs(),
+        state);
+  }
+
+  @Override
+  public double calculateAchievedPoints(final Answer answer) {
+    if (answer instanceof QtiAnswer qtiAnswer) {
+      return calculateAchievedPoints(qtiAnswer.getResponses());
+    }
+    return super.calculateAchievedPoints(answer);
+  }
+
+  private double calculateAchievedPoints(final List<QtiAnswer.QtiResponse> responses) {
     StringBuilder assessmentItem = new StringBuilder();
     assessmentItem.append(STR."""
                                   <qti-assessment-item identifier="item">
@@ -97,7 +121,6 @@ public class QtiContent extends Content {
                                   </qti-assessment-item>
                               """);
 
-    List<QtiAnswer.QtiResponse> responses = answer.getResponses();
     StringBuilder assessmentResult = new StringBuilder();
 
     assessmentResult.append("""
@@ -139,18 +162,8 @@ public class QtiContent extends Content {
       achievedPoints = ScoreResult.score(scoreResult) * this.getPoints();
       partiallyCorrect = ScoreResult.partiallyCorrect(scoreResult) == 1;
     }
-    final AnswerResult.AnswerResultState state = achievedPoints > 0.999 * this.getPoints()
-        ? AnswerResult.AnswerResultState.CORRECT : (achievedPoints > 0 && partiallyCorrect) ? AnswerResult.AnswerResultState.PARTIALLY_CORRECT : AnswerResult.AnswerResultState.WRONG;
-    final double competitivePoints =
-        calculateCompetitivePoints(answer.getCreationTimestamp().toInstant(), achievedPoints);
 
-    return new AnswerResult(
-        this.id,
-        achievedPoints,
-        competitivePoints,
-        this.getPoints(),
-        answer.getDurationMs(),
-        state);
+    return achievedPoints;
   }
 
   @Override

@@ -27,6 +27,7 @@ import net.particify.arsnova.core.model.ContentGroupTemplate;
 import net.particify.arsnova.core.model.ContentLicenseAttribution;
 import net.particify.arsnova.core.model.ContentTemplate;
 import net.particify.arsnova.core.model.LeaderboardEntry;
+import net.particify.arsnova.core.model.export.ContentCsvImportSummary;
 import net.particify.arsnova.core.model.serialization.View;
 import net.particify.arsnova.core.service.AnswerService;
 import net.particify.arsnova.core.service.ContentGroupService;
@@ -46,6 +47,7 @@ public class ContentGroupController extends AbstractEntityController<ContentGrou
   private static final String ATTRIBUTIONS_ENDPOINT = DEFAULT_ID_MAPPING + "/attributions";
   private static final String CREATE_FROM_TEMPLATE_MAPPING = "/-/create-from-template";
   private static final String LEADERBOARD_MAPPING = DEFAULT_ID_MAPPING + "/leaderboard";
+  private static final String START_CONTENT_MAPPING = DEFAULT_ID_MAPPING + "/start-content";
 
   private ContentGroupService contentGroupService;
   private AnswerService answerService;
@@ -114,10 +116,10 @@ public class ContentGroupController extends AbstractEntityController<ContentGrou
   }
 
   @PostMapping(IMPORT_MAPPING)
-  public void importFromFile(@PathVariable final String id, @RequestParam final MultipartFile file)
+  public ContentCsvImportSummary importFromFile(@PathVariable final String id, @RequestParam final MultipartFile file)
       throws IOException {
     final ContentGroup contentGroup = get(id);
-    contentGroupService.importFromCsv(file.getBytes(), contentGroup);
+    return contentGroupService.importFromCsv(file.getBytes(), contentGroup);
   }
 
   @GetMapping(ANSWER_STATISTICS_USER_SUMMARY_MAPPING)
@@ -163,6 +165,14 @@ public class ContentGroupController extends AbstractEntityController<ContentGrou
   public List<AnswerStatisticsSummaryEntry> getStatistics(@PathVariable final String id) {
     final ContentGroup contentGroup = get(id);
     return answerService.calculateStatsByContentIds(contentGroup.getRoomId(), contentGroup.getContentIds());
+  }
+
+  @PostMapping(START_CONTENT_MAPPING)
+  public void startContent(
+      @PathVariable final String id,
+      @RequestParam final String contentId,
+      @RequestParam(defaultValue = "-1") final int round) {
+    contentGroupService.startContent(id, contentId, round);
   }
 
   static class AddContentToGroupRequestEntity {

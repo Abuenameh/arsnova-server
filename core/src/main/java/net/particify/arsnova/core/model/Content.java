@@ -388,15 +388,47 @@ public class Content extends Entity implements RoomIdAware {
       return achievedPoints;
     }
     final long timeLeft = answerTime.until(
-        getState().getAnsweringEndTime().toInstant(), ChronoUnit.SECONDS);
+        getState().getAnsweringEndTime().toInstant(), ChronoUnit.MILLIS);
     // By multiplying by 2, taking less than half of the duration for answering
     // results in additional points while taking more time results in subtracted
     // points in comparison to the base points given for correct answers.
-    return 2.0 * timeLeft / getDuration() * achievedPoints;
+    return 2.0 * timeLeft / 1000 / getDuration() * achievedPoints;
   }
 
   public double calculateAchievedPoints(final Answer answer) {
     return 0;
+  }
+
+  /**
+   * Sets answeringEndTime based on the duration. If duration is 0, a duration
+   * of 10 years is used as fallback.
+   *
+   * @return true if the content was not already started.
+   */
+  public boolean startTime() {
+    if (state.answeringEndTime != null) {
+      return false;
+    }
+    state.setAnsweringEndTime(Date.from(
+        duration > 0
+            ? Instant.now().plusSeconds(duration)
+            : Instant.now().plus(3650, ChronoUnit.DAYS)));
+    return true;
+  }
+
+  /**
+   * Starts the next round.
+   *
+   * @param round Only used for validation to prevent accidentally skipping rounds.
+   * @return true if round was successfully updated.
+   */
+  public boolean startRound(final int round) {
+    if (round != state.round + 1) {
+      return false;
+    }
+    state.round = round;
+    state.answeringEndTime = null;
+    return true;
   }
 
   /**

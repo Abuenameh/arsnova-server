@@ -1,14 +1,12 @@
 plugins {
   java
   jacoco
-  // checkstyle
-  // id("com.github.spotbugs")
+  checkstyle
+  id("com.github.spotbugs")
   id("com.google.cloud.tools.jib")
   id("io.freefair.aspectj.post-compile-weaving")
   id("org.jlleitschuh.gradle.ktlint")
   id("org.springframework.boot")
-  id("io.github.krakowski.jextract") version "0.5.0"
-  id("xyz.ronella.dotnet.core") version "3.1.0"
 }
 
 java {
@@ -58,10 +56,6 @@ dependencies {
   implementation("org.ektorp:org.ektorp.spring")
   implementation("net.particify.arsnova.integrations:connector-client")
   implementation("io.micrometer:micrometer-registry-prometheus")
-  implementation("net.java.dev.jna:jna:5.11.0")
-  implementation("com.flipkart.utils:javatuples:3.0")
-  implementation("commons-codec:commons-codec:1.15")
-  implementation("com.google.code.gson:gson:2.9.0")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("org.springframework.security:spring-security-test")
   compileOnly("org.springframework.boot:spring-boot-devtools")
@@ -77,43 +71,10 @@ tasks.withType<Test> {
   useJUnitPlatform()
 }
 
-tasks.withType<JavaCompile>().configureEach {
-  options.compilerArgs.add("--enable-preview")
-}
-
-tasks.withType<Test>().configureEach {
-  jvmArgs("--enable-preview")
-}
-
-tasks.withType<JavaExec>().configureEach {
-  jvmArgs("--enable-preview", "--enable-native-access=ALL-UNNAMED")
-}
-
-tasks.register<Copy>("installJextract") {
-  from(tarTree("jextract-22.tar.gz"))
-  into("/home/dev/.local/")
-}
-
-tasks.register<Copy>("installScoringEngine") {
-  dependsOn("dotnetPublish")
-  from("${project.projectDir}/build/dotnet/net8.0/linux-x64/publish/libScoringEngine.so")
-  // dependsOn("dotnetBuild")
-  // from("${project.projectDir}/build/dotnet/net8.0/ScoringEngine.dll")
-  // from("${project.projectDir}/build/dotnet/net8.0/Jint.dll")
-  // from("${project.projectDir}/build/dotnet/net8.0/Esprima.dll")
-  // from("${project.projectDir}/build/dotnet/net8.0/Microsoft.Extensions.Logging.Abstractions.dll")
-  // from("${project.projectDir}/build/dotnet/net8.0/libScoringEngine.so")
-  // from("${project.projectDir}/build/dotnet/net8.0/ScoringEngine.runtimeconfig.json")
-  into("${project.projectDir}/src/main/jib/usr/lib")
-}
-
 tasks.jib {
   jib {
     from {
-      image = "eclipse-temurin:21"
-    }
-    container {
-      jvmFlags = listOf("--enable-preview", "--enable-native-access=ALL-UNNAMED")
+      image = "eclipse-temurin:21-alpine"
     }
   }
 }
@@ -124,32 +85,20 @@ tasks.jacocoTestReport {
   }
 }
 
-// checkstyle {
-//   toolVersion = libs.versions.checkstyle.get()
-//   configFile = file("$projectDir/checkstyle.xml")
-//   configProperties =
-//     mapOf(
-//       "checkstyle.missing-javadoc.severity" to "info",
-//     )
-//   maxWarnings = 0
-// }
-
-// spotbugs {
-//   excludeFilter.set(file("../spotbugs-exclude.xml"))
-// }
-
-// tasks.spotbugsTest {
-//   enabled = false
-// }
-
-tasks.dotnetPublish {
-  args = listOf("qti-scoring-engine/Scoring/ScoringEngine.csproj")
+checkstyle {
+  toolVersion = libs.versions.checkstyle.get()
+  configFile = file("$projectDir/checkstyle.xml")
+  configProperties =
+    mapOf(
+      "checkstyle.missing-javadoc.severity" to "info",
+    )
+  maxWarnings = 0
 }
 
-tasks.jextract {
-  dependsOn("dotnetPublish")
-  header("${project.projectDir}/build/dotnet/net8.0/linux-x64/libScoringEngine.h") {
-    libraries = listOf("ScoringEngine")
-    targetPackage = "citolab.qti.scoringengine"
-  }
+spotbugs {
+  excludeFilter.set(file("../spotbugs-exclude.xml"))
+}
+
+tasks.spotbugsTest {
+  enabled = false
 }

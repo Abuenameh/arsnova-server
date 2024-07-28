@@ -25,12 +25,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 import org.springframework.core.style.ToStringCreator;
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
 
 import net.particify.arsnova.core.model.serialization.View;
-import static citolab.qti.scoringengine.libScoringEngine_h.Score;
-import citolab.qti.scoringengine.ScoreResult;
 
 public class QtiContent extends Content {
   private String qtiItem;
@@ -90,7 +86,7 @@ public class QtiContent extends Content {
           AnswerResult.AnswerResultState.NEUTRAL);
     }
 
-    final double achievedPoints = calculateAchievedPoints(answer.getResponses());
+    final double achievedPoints = calculateAchievedPoints(answer.getScore(), answer.getMaxScore());
     final AnswerResult.AnswerResultState state = achievedPoints > 0.999 * this.getPoints()
         ? AnswerResult.AnswerResultState.CORRECT : (achievedPoints > 0 && achievedPoints < 0.999 * this.getPoints()) ? AnswerResult.AnswerResultState.PARTIALLY_CORRECT : AnswerResult.AnswerResultState.WRONG;
     final double competitivePoints =
@@ -108,62 +104,13 @@ public class QtiContent extends Content {
   @Override
   public double calculateAchievedPoints(final Answer answer) {
     if (answer instanceof QtiAnswer qtiAnswer) {
-      return calculateAchievedPoints(qtiAnswer.getResponses());
+      return calculateAchievedPoints(qtiAnswer.getScore(), qtiAnswer.getMaxScore());
     }
     return super.calculateAchievedPoints(answer);
   }
 
-  private double calculateAchievedPoints(final List<QtiAnswer.QtiResponse> responses) {
-    StringBuilder assessmentItem = new StringBuilder();
-    assessmentItem.append(STR."""
-                                  <qti-assessment-item identifier="item">
-                                      \{qtiItem}
-                                  </qti-assessment-item>
-                              """);
-
-    StringBuilder assessmentResult = new StringBuilder();
-
-    assessmentResult.append("""
-                                <assessmentResult>
-                                    <itemResult identifier="item">
-                            """);
-    for (QtiAnswer.QtiResponse response : responses) {
-      assessmentResult.append(STR."""
-                                      <responseVariable identifier="\{response.getIdentifier()}" cardinality="\{response.getCardinality()}" baseType="\{response.getBaseType()}">
-                                          <candidateResponse>
-                                  """);
-      switch (response.getCardinality()) {
-        case "single":
-          assessmentResult.append(STR."<value>\{response.getValue()}</value>");
-          break;
-        case "multiple":
-          for (String value : response.getValues()) {
-            assessmentResult.append(STR."<value>\{value}</value>");
-          }
-          break;
-      }
-      assessmentResult.append("""
-                                      </candidateResponse>
-                                  </responseVariable>
-                              """);
-    }
-    assessmentResult.append("""
-                                    </itemResult>
-                                </assessmentResult>
-                            """);
-
-    double achievedPoints = 0;
-    boolean partiallyCorrect = false;
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment assessmentItemStr = arena.allocateUtf8String(assessmentItem.toString());
-      MemorySegment assessmentResultStr = arena.allocateUtf8String(assessmentResult.toString());
-      MemorySegment scoreResult = ScoreResult.allocate(arena);
-      Score(assessmentItemStr, assessmentResultStr, scoreResult);
-      achievedPoints = ScoreResult.score(scoreResult) * this.getPoints();
-      partiallyCorrect = ScoreResult.partiallyCorrect(scoreResult) == 1;
-    }
-
-    return achievedPoints;
+  private double calculateAchievedPoints(final double score, final double maxScore) {
+    return (score / maxScore) * this.getPoints();
   }
 
   @Override

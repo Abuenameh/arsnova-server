@@ -137,10 +137,11 @@ public class QtiAnswer extends Answer {
 
   private List<@NotNull QtiResponse> responses = new ArrayList<>();
 
-  private boolean correct = false;
+  private Double score;
+
+  private Double maxScore;
 
   public QtiAnswer() {
-
   }
 
   public QtiAnswer(final QtiContent content, final String creatorId) {
@@ -158,13 +159,23 @@ public class QtiAnswer extends Answer {
   }
 
   @JsonView({View.Persistence.class, View.Public.class})
-  public boolean isCorrect() {
-    return correct;
+  public Double getScore() {
+    return score;
   }
 
   @JsonView({View.Persistence.class, View.Public.class})
-  public void setCorrect(final boolean correct) {
-    this.correct = correct;
+  public void setScore(final double score) {
+    this.score = score;
+  }
+
+  @JsonView({View.Persistence.class, View.Public.class})
+  public Double getMaxScore() {
+    return maxScore;
+  }
+
+  @JsonView({View.Persistence.class, View.Public.class})
+  public void setMaxScore(final double maxScore) {
+    this.maxScore = maxScore;
   }
 
   @Override
@@ -192,18 +203,19 @@ public class QtiAnswer extends Answer {
     }
     final QtiAnswer that = (QtiAnswer) o;
 
-    return Objects.equals(responses, that.responses) && correct == that.correct;
+    return Objects.equals(responses, that.responses) && Objects.equals(score, that.score) && Objects.equals(maxScore, that.maxScore);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), responses, correct);
+    return Objects.hash(super.hashCode(), responses, score, maxScore);
   }
 
   @Override
   protected ToStringCreator buildToString() {
     return super.buildToString()
         .append("responses", responses)
-        .append("correct", correct);
+        .append("score", score)
+        .append("maxScore", maxScore);
   }
 }

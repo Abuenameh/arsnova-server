@@ -74,7 +74,9 @@ import net.particify.arsnova.core.model.NumericAnswer;
 import net.particify.arsnova.core.model.NumericAnswerStatistics;
 import net.particify.arsnova.core.model.NumericContent;
 import net.particify.arsnova.core.model.QtiAnswer;
+import net.particify.arsnova.core.model.QtiAnswer.QtiResponse;
 import net.particify.arsnova.core.model.QtiAnswerStatistics;
+import net.particify.arsnova.core.model.QtiAnswerStatistics.QtiRoundStatistics;
 import net.particify.arsnova.core.model.QtiContent;
 import net.particify.arsnova.core.model.PrioritizationAnswerStatistics;
 import net.particify.arsnova.core.model.PrioritizationChoiceContent;
@@ -456,17 +458,40 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
       throw new NotFoundException();
     }
     final List<QtiAnswer> answers = answerRepository.findByContentIdRound(QtiAnswer.class, contentId, round);
+    /* Flatten lists of individual answers to a combined map of responses with
+     * count */
+    final Map<String, Long> responseCounts = answers.stream()
+        .flatMap(a -> a.getResponses().stream())
+        .collect(Collectors.groupingBy(
+            QtiResponse::getValue,
+            Collectors.counting()));
     final QtiAnswerStatistics stats = new QtiAnswerStatistics();
-    stats.setContentId(contentId);
-    final QtiAnswerStatistics.QtiRoundStatistics roundStats =
-        new QtiAnswerStatistics.QtiRoundStatistics();
+    final QtiRoundStatistics roundStats = new QtiRoundStatistics();
     roundStats.setRound(round);
     roundStats.setAbstentionCount((int) answers.stream().filter(a -> a.getResponses().isEmpty()).count());
+    /* Group by text similarity and then choose the most common variant as
+     * key and calculate the new count */
+    final Map<String, Integer> countsBySimilarity = responseCounts.entrySet().stream()
+        .collect(Collectors.groupingBy(e -> WordcloudContent.normalizeText(e.getKey())))
+        .entrySet().stream()
+        .collect(Collectors.toMap(
+            /* Select most common variant as key */
+            entry -> entry.getValue().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(""),
+            /* Calculate sum of counts of similar texts */
+            entry -> entry.getValue().stream()
+                .map(Map.Entry::getValue)
+                .reduce(Long::sum)
+                .map(Long::intValue)
+                .orElse(0)));
+    roundStats.setResponses(countsBySimilarity.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList()));
     roundStats.setAnswerCount(answers.size());
-    final List<QtiAnswerStatistics.QtiRoundStatistics> roundStatisticsList =
-        new ArrayList<>(Collections.nCopies(round, null));
-    roundStatisticsList.set(round - 1, roundStats);
-    stats.setRoundStatistics(roundStatisticsList);
+    roundStats.setIndependentCounts(countsBySimilarity.values().stream().collect(Collectors.toList()));
+    stats.setRoundStatistics(new ArrayList(Collections.nCopies(round, null)));
+    stats.getRoundStatistics().set(round - 1, roundStats);
+
     return stats;
   }
 
@@ -591,10 +616,6 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
             && (selectedNumber < numericContent.getMinNumber() || selectedNumber > numericContent.getMaxNumber())) {
           throw new IllegalArgumentException("Selected number must be in content range.");
         }
-      } else if (content instanceof QtiContent qtiContent) {
-        final QtiAnswer qtiAnswer = (QtiAnswer) answer;
-        final AnswerResult result = qtiContent.determineAnswerResult(qtiAnswer);
-        qtiAnswer.setCorrect(result.getState() == AnswerResultState.CORRECT);
       }
       answer.setRound(content.getState().getRound());
     }

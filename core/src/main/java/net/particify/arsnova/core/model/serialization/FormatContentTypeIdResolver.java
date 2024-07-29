@@ -30,9 +30,9 @@ import net.particify.arsnova.core.model.Content;
 import net.particify.arsnova.core.model.GridImageContent;
 import net.particify.arsnova.core.model.NumericContent;
 import net.particify.arsnova.core.model.PrioritizationChoiceContent;
+import net.particify.arsnova.core.model.QtiContent;
 import net.particify.arsnova.core.model.ScaleChoiceContent;
 import net.particify.arsnova.core.model.WordcloudContent;
-import net.particify.arsnova.core.model.QtiContent;
 
 public class FormatContentTypeIdResolver extends TypeIdResolverBase {
   @Override

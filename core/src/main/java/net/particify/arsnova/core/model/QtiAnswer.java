@@ -20,7 +20,6 @@ package net.particify.arsnova.core.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +34,8 @@ public class QtiAnswer extends Answer {
 
     }
 
-    public QtiResponse(final String identifier, final String cardinality, final String baseType, final String value, final String[] values, final String correctResponse, final String[] correctResponses) {
+    public QtiResponse(final String identifier, final String cardinality, final String baseType, final String value,
+        final String[] values, final String correctResponse, final String[] correctResponses) {
       this.identifier = identifier;
       this.cardinality = cardinality;
       this.baseType = baseType;
@@ -140,7 +140,10 @@ public class QtiAnswer extends Answer {
       }
       final QtiResponse that = (QtiResponse) o;
 
-      return Objects.equals(identifier, that.identifier) && Objects.equals(cardinality, that.cardinality) && Objects.equals(baseType, that.baseType) && Objects.equals(value, that.value) && Arrays.equals(values, that.values) && Objects.equals(correctResponse, that.correctResponse) && Arrays.equals(correctResponses, that.correctResponses);
+      return Objects.equals(identifier, that.identifier) && Objects.equals(cardinality, that.cardinality)
+          && Objects.equals(baseType, that.baseType) && Objects.equals(value, that.value)
+          && Arrays.equals(values, that.values) && Objects.equals(correctResponse, that.correctResponse)
+          && Arrays.equals(correctResponses, that.correctResponses);
     }
 
     @Override
@@ -231,7 +234,8 @@ public class QtiAnswer extends Answer {
     }
     final QtiAnswer that = (QtiAnswer) o;
 
-    return Objects.equals(responses, that.responses) && Objects.equals(score, that.score) && Objects.equals(maxScore, that.maxScore);
+    return Objects.equals(responses, that.responses) && Objects.equals(score, that.score)
+        && Objects.equals(maxScore, that.maxScore);
   }
 
   @Override

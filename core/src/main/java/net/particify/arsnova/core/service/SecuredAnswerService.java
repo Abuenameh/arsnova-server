@@ -15,9 +15,9 @@ import net.particify.arsnova.core.model.ContentGroup;
 import net.particify.arsnova.core.model.LeaderboardEntry;
 import net.particify.arsnova.core.model.NumericAnswerStatistics;
 import net.particify.arsnova.core.model.PrioritizationAnswerStatistics;
+import net.particify.arsnova.core.model.QtiAnswerStatistics;
 import net.particify.arsnova.core.model.TextAnswer;
 import net.particify.arsnova.core.model.TextAnswerStatistics;
-import net.particify.arsnova.core.model.QtiAnswerStatistics;
 
 @Service
 public class SecuredAnswerService extends AbstractSecuredEntityServiceImpl<Answer>

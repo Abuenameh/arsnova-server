@@ -19,11 +19,7 @@
 package net.particify.arsnova.core.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import jakarta.validation.constraints.NotBlank;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.IntStream;
 import org.springframework.core.style.ToStringCreator;
 
 import net.particify.arsnova.core.model.serialization.View;
@@ -88,7 +84,8 @@ public class QtiContent extends Content {
 
     final double achievedPoints = calculateAchievedPoints(answer.getScore(), answer.getMaxScore());
     final AnswerResult.AnswerResultState state = achievedPoints > 0.999 * this.getPoints()
-        ? AnswerResult.AnswerResultState.CORRECT : (achievedPoints > 0 && achievedPoints < 0.999 * this.getPoints()) ? AnswerResult.AnswerResultState.PARTIALLY_CORRECT : AnswerResult.AnswerResultState.WRONG;
+        ? AnswerResult.AnswerResultState.CORRECT : (achievedPoints > 0 && achievedPoints < 0.999 * this.getPoints())
+        ? AnswerResult.AnswerResultState.PARTIALLY_CORRECT : AnswerResult.AnswerResultState.WRONG;
     final double competitivePoints =
         calculateCompetitivePoints(answer.getCreationTimestamp().toInstant(), achievedPoints);
 

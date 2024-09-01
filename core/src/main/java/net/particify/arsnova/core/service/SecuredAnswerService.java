@@ -61,6 +61,18 @@ public class SecuredAnswerService extends AbstractSecuredEntityServiceImpl<Answe
 
   @Override
   @PreAuthorize("hasPermission(#contentId, 'content', 'read')")
+  public TextAnswerStatistics getShortAnswerStatistics(final String contentId, final int round) {
+    return answerService.getShortAnswerStatistics(contentId, round);
+  }
+
+  @Override
+  @PreAuthorize("hasPermission(#contentId, 'content', 'read')")
+  public TextAnswerStatistics getShortAnswerStatistics(final String contentId) {
+    return answerService.getShortAnswerStatistics(contentId);
+  }
+
+  @Override
+  @PreAuthorize("hasPermission(#contentId, 'content', 'read')")
   public NumericAnswerStatistics getNumericStatistics(final String contentId) {
     return answerService.getNumericStatistics(contentId);
   }
@@ -98,8 +110,10 @@ public class SecuredAnswerService extends AbstractSecuredEntityServiceImpl<Answe
   @Override
   @PreAuthorize("hasPermission(#userId, 'userprofile', 'owner')")
   public AnswerStatisticsUserSummary getStatisticsByUserIdAndContentIds(
-      final String userId, final List<String> contentIds) {
-    return answerService.getStatisticsByUserIdAndContentIds(userId, contentIds);
+      final String userId,
+      final List<String> contentIds,
+      final boolean hideResult) {
+    return answerService.getStatisticsByUserIdAndContentIds(userId, contentIds, hideResult);
   }
 
   @Override

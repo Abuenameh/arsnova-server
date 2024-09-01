@@ -48,6 +48,10 @@ public interface AnswerService extends EntityService<Answer> {
 
   TextAnswerStatistics getTextStatistics(String contentId);
 
+  TextAnswerStatistics getShortAnswerStatistics(String contentId, int round);
+
+  TextAnswerStatistics getShortAnswerStatistics(String contentId);
+
   PrioritizationAnswerStatistics getPrioritizationStatistics(String contentId);
 
   NumericAnswerStatistics getNumericStatistics(String contentId, int round);
@@ -58,7 +62,10 @@ public interface AnswerService extends EntityService<Answer> {
 
   QtiAnswerStatistics getQtiStatistics(String contentId);
 
-  AnswerStatisticsUserSummary getStatisticsByUserIdAndContentIds(String userId, List<String> contentIds);
+  AnswerStatisticsUserSummary getStatisticsByUserIdAndContentIds(
+      String userId,
+      List<String> contentIds,
+      boolean hideResult);
 
   List<String> getAnswerIdsByContentIdNotHidden(String contentId);
 

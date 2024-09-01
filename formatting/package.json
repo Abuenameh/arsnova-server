@@ -16,10 +16,10 @@
     "markdown-it-prism": "2.3.0"
   },
   "devDependencies": {
-    "eslint": "9.7.0",
+    "eslint": "9.9.1",
     "eslint-plugin-import": "2.29.1",
-    "eslint-plugin-n": "17.9.0",
-    "eslint-plugin-promise": "7.0.0"
+    "eslint-plugin-n": "17.10.2",
+    "eslint-plugin-promise": "7.1.0"
   },
   "resolutions": {
     "katex": "^0.16.0"

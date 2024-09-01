@@ -32,6 +32,7 @@ import net.particify.arsnova.core.model.NumericContent;
 import net.particify.arsnova.core.model.PrioritizationChoiceContent;
 import net.particify.arsnova.core.model.QtiContent;
 import net.particify.arsnova.core.model.ScaleChoiceContent;
+import net.particify.arsnova.core.model.ShortAnswerContent;
 import net.particify.arsnova.core.model.WordcloudContent;
 
 public class FormatContentTypeIdResolver extends TypeIdResolverBase {
@@ -76,6 +77,8 @@ public class FormatContentTypeIdResolver extends TypeIdResolverBase {
         return TypeFactory.defaultInstance().constructType(WordcloudContent.class);
       case PRIORITIZATION:
         return TypeFactory.defaultInstance().constructType(PrioritizationChoiceContent.class);
+      case SHORT_ANSWER:
+        return TypeFactory.defaultInstance().constructType(ShortAnswerContent.class);
       case QTI:
         return TypeFactory.defaultInstance().constructType(QtiContent.class);
       default:

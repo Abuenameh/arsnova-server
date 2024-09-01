@@ -61,6 +61,7 @@ public class Content extends Entity implements RoomIdAware {
     FLASHCARD,
     WORDCLOUD,
     PRIORITIZATION,
+    SHORT_ANSWER,
     QTI
   }
 
@@ -373,6 +374,10 @@ public class Content extends Entity implements RoomIdAware {
   @JsonView(View.Public.class)
   public boolean isScorable() {
     return false;
+  }
+
+  public Object getCorrectnessCriteria() {
+    return null;
   }
 
   public AnswerResult determineAnswerResult(final Answer answer) {

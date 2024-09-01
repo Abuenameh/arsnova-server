@@ -2,8 +2,12 @@ package net.particify.arsnova.core.model.export;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.nimbusds.jose.util.StandardCharset;
+
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -15,6 +19,7 @@ import net.particify.arsnova.core.model.ChoiceQuestionContent;
 import net.particify.arsnova.core.model.Content;
 import net.particify.arsnova.core.model.NumericContent;
 import net.particify.arsnova.core.model.PrioritizationChoiceContent;
+import net.particify.arsnova.core.model.QtiContent;
 import net.particify.arsnova.core.model.ScaleChoiceContent;
 import net.particify.arsnova.core.model.ShortAnswerContent;
 import net.particify.arsnova.core.model.WordcloudContent;
@@ -88,6 +93,8 @@ public class ContentExport {
     } else if (content instanceof ShortAnswerContent shortAnswerContent) {
       this.options = new ArrayList<>(shortAnswerContent.getCorrectTerms());
       this.correctOptions = this.options;
+    } else if (content instanceof QtiContent qtiContent) {
+      this.options = List.of(Base64.getEncoder().encodeToString(qtiContent.getQtiItem().getBytes(StandardCharsets.UTF_8)), String.valueOf(qtiContent.getShowResponses()));
     }
   }
 
@@ -112,6 +119,8 @@ public class ContentExport {
       content = toWordcloudContent();
     } else if (format == Content.Format.SHORT_ANSWER) {
       content = toShortAnswerContent();
+    } else if (format == Content.Format.QTI) {
+      content = toQtiContent();
     } else {
       content = new Content();
     }
@@ -241,5 +250,16 @@ public class ContentExport {
     shortAnswerContent.setCorrectTerms(new HashSet<>(!this.options.isEmpty() ? this.options : this.correctOptions));
 
     return shortAnswerContent;
+  }
+
+  private QtiContent toQtiContent() {
+    final QtiContent qtiContent = new QtiContent();
+    if (this.options.size() != 2) {
+      throw new ImportValidationException();
+    }
+    qtiContent.setQtiItem(new String(Base64.getDecoder().decode(this.options.get(0)), StandardCharset.UTF_8));
+    qtiContent.setShowResponses(Boolean.parseBoolean(this.options.get(1)));
+
+    return qtiContent;
   }
 }

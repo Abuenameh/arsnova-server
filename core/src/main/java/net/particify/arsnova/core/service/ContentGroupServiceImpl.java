@@ -219,6 +219,7 @@ public class ContentGroupServiceImpl extends DefaultEntityServiceImpl<ContentGro
         Content.Format.BINARY,
         Content.Format.NUMERIC,
         Content.Format.SORT,
+        Content.Format.QTI,
         Content.Format.SHORT_ANSWER);
     if (type == ContentGroup.GroupType.QUIZ
         && quizTypes.contains(content.getFormat())
@@ -232,7 +233,8 @@ public class ContentGroupServiceImpl extends DefaultEntityServiceImpl<ContentGro
         Content.Format.SCALE,
         Content.Format.PRIORITIZATION,
         Content.Format.TEXT,
-        Content.Format.WORDCLOUD);
+        Content.Format.WORDCLOUD,
+        Content.Format.QTI);
     if (type == ContentGroup.GroupType.SURVEY
         && surveyTypes.contains(content.getFormat())
         && !content.isScorable()) {

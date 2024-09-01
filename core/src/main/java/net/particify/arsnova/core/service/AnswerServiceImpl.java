@@ -563,7 +563,7 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
     /* Group by text similarity and then choose the most common variant as
      * key and calculate the new count */
     final Map<String, Integer> countsBySimilarity = responseCounts.entrySet().stream()
-        .collect(Collectors.groupingBy(e -> WordcloudContent.normalizeText(e.getKey())))
+        .collect(Collectors.groupingBy(e -> WordContent.normalizeText(e.getKey())))
         .entrySet().stream()
         .collect(Collectors.toMap(
             /* Select most common variant as key */

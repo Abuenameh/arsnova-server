@@ -18,6 +18,7 @@ import net.particify.arsnova.core.model.ContentGroup;
 import net.particify.arsnova.core.model.GridImageContent;
 import net.particify.arsnova.core.model.NumericContent;
 import net.particify.arsnova.core.model.PrioritizationChoiceContent;
+import net.particify.arsnova.core.model.QtiContent;
 import net.particify.arsnova.core.model.Room;
 import net.particify.arsnova.core.model.ScaleChoiceContent;
 import net.particify.arsnova.core.model.WordcloudContent;
@@ -121,6 +122,8 @@ public class DuplicationServiceImpl implements ApplicationEventPublisherAware, D
       return new GridImageContent((GridImageContent) content);
     } else if (content instanceof NumericContent) {
       return new NumericContent((NumericContent) content);
+    } else if (content instanceof QtiContent) {
+      return new QtiContent((QtiContent) content);
     } else if (content.getClass() == Content.class) {
       // Not using instanceof here so it does not apply to subclasses
       return new Content(content);

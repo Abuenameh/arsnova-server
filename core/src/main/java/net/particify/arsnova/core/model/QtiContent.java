@@ -26,6 +26,7 @@ import net.particify.arsnova.core.model.serialization.View;
 
 public class QtiContent extends Content {
   private String qtiItem;
+  private boolean showResponses;
 
   public QtiContent() {
 
@@ -34,6 +35,7 @@ public class QtiContent extends Content {
   public QtiContent(final QtiContent content) {
     super(content);
     this.qtiItem = content.qtiItem;
+    this.showResponses = content.showResponses;
   }
 
   @JsonView({View.Persistence.class, View.Public.class})
@@ -44,6 +46,16 @@ public class QtiContent extends Content {
   @JsonView({View.Persistence.class, View.Public.class})
   public void setQtiItem(final String qtiItem) {
     this.qtiItem = qtiItem;
+  }
+
+  @JsonView({View.Persistence.class, View.Public.class})
+  public boolean getShowResponses() {
+    return showResponses;
+  }
+
+  @JsonView({View.Persistence.class, View.Public.class})
+  public void setShowResponses(final boolean showResponses) {
+    this.showResponses = showResponses;
   }
 
   @Override
@@ -135,17 +147,18 @@ public class QtiContent extends Content {
     }
     final QtiContent that = (QtiContent) o;
 
-    return Objects.equals(qtiItem, that.qtiItem);
+    return Objects.equals(qtiItem, that.qtiItem) && showResponses == that.showResponses;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), qtiItem);
+    return Objects.hash(super.hashCode(), qtiItem, showResponses);
   }
 
   @Override
   protected ToStringCreator buildToString() {
     return super.buildToString()
-        .append("qtiItem", qtiItem);
+        .append("qtiItem", qtiItem)
+        .append("showResponses", showResponses);
   }
 }

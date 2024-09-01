@@ -463,7 +463,9 @@ public class AnswerServiceImpl extends DefaultEntityServiceImpl<Answer> implemen
         .flatMap(a -> a.getResponses().stream())
         .collect(Collectors.groupingBy(
             QtiResponse::getValue,
-            Collectors.counting()));
+            Collectors.counting())).entrySet().stream()
+            .filter(entry -> !entry.getKey().isBlank())
+            .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
     final QtiAnswerStatistics stats = new QtiAnswerStatistics();
     final QtiRoundStatistics roundStats = new QtiRoundStatistics();
     roundStats.setRound(round);

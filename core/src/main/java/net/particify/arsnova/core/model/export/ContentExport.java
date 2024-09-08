@@ -3,7 +3,6 @@ package net.particify.arsnova.core.model.export;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.nimbusds.jose.util.StandardCharset;
-
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -94,7 +93,9 @@ public class ContentExport {
       this.options = new ArrayList<>(shortAnswerContent.getCorrectTerms());
       this.correctOptions = this.options;
     } else if (content instanceof QtiContent qtiContent) {
-      this.options = List.of(Base64.getEncoder().encodeToString(qtiContent.getQtiItem().getBytes(StandardCharsets.UTF_8)), String.valueOf(qtiContent.getShowResponses()));
+      this.options = List.of(Base64.getEncoder()
+        .encodeToString(qtiContent.getQtiItem().getBytes(StandardCharsets.UTF_8)),
+          String.valueOf(qtiContent.getShowResponses()));
     }
   }
 
